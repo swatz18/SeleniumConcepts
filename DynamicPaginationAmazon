@@ -1,0 +1,66 @@
+package seleniumConcepts;
+
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+public class DynamicPagination {
+	 public static void main(String[] args) throws InterruptedException {
+		 // Set up Chrome options
+	        ChromeOptions options = new ChromeOptions();
+	        options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
+	        options.setExperimentalOption("useAutomationExtension", false);
+	        options.addArguments("--start-maximized");
+
+	        WebDriver driver = new ChromeDriver(options);
+	        int count = 1;
+
+	        try {
+	            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+	            driver.get("https://www.amazon.in");
+
+	            WebElement searchBox = driver.findElement(By.id("twotabsearchtextbox"));
+	            searchBox.sendKeys("Laptop");
+	            driver.findElement(By.id("nav-search-submit-button")).click();
+
+	            while (true) {
+	                try {
+	                    // Locate "Next" button
+	                    WebElement nextButton = driver.findElement(By.xpath("//a[contains(@aria-label,\"Go to next page\")]"));
+
+	                    // Wait until clickable
+	                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+	                    wait.until(ExpectedConditions.elementToBeClickable(nextButton));
+
+	                    // Scroll into view and click
+	                    ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView();", nextButton);
+	                    Thread.sleep(2000);
+
+	                    System.out.println("Navigating to next page... Page " + count);
+	                    count++;
+	                    nextButton.click();
+
+	                    // Wait for next page to load
+	                    Thread.sleep(5000);
+
+	                } catch (org.openqa.selenium.NoSuchElementException e) {
+	                    System.out.println("Reached last page. No 'Next' button found.");
+	                    break;
+	                } catch (org.openqa.selenium.StaleElementReferenceException e) {
+	                    System.out.println("Stale element exception. Retrying...");
+	                    Thread.sleep(2000);
+	                }
+	            }
+
+	        } finally {
+	            driver.quit();
+	        }
+	    }
+
+}
